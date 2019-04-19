@@ -1,0 +1,5 @@
+theme = "hugo-academic"
+baseURL = "/"
+languageCode = "en-us"
+title = "Hlynur Hallgrímsson"
+ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
