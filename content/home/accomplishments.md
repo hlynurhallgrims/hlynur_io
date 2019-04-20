@@ -19,33 +19,33 @@ date_format = "Jan 2006"
 #   Begin/end multi-line descriptions with 3 quotes `"""`.
 
 [[item]]
-  organization = "Coursera"
-  organization_url = "https://www.coursera.org"
-  title = "Neural Networks and Deep Learning"
+  organization = "DataCamp"
+  organization_url = "https://www.datacamp.com"
+  title = "Data Scientist with R - Career Track"
   url = ""
-  certificate_url = "https://www.coursera.org"
-  date_start = "2018-10-01"
+  certificate_url = "https://www.datacamp.com/statement-of-accomplishment/track/dd6d6ea38f55f0beca3f1130cad2d557e9edf618"
+  date_start = "2018-12-01"
   date_end = ""
   description = ""
-
-[[item]]
-  organization = "edX"
-  organization_url = "https://www.edx.org"
-  title = "Blockchain Fundamentals"
-  url = "https://www.edx.org/professional-certificate/uc-berkeleyx-blockchain-fundamentals"
-  certificate_url = "https://www.edx.org"
-  date_start = "2018-03-01"
-  date_end = ""
-  description = "Formulated informed blockchain models, hypotheses, and use cases."
   
 [[item]]
   organization = "DataCamp"
   organization_url = "https://www.datacamp.com"
-  title = "Object-Oriented Programming in R: S3 and R6 Course"
+  title = "Data Manipulation with R Track - Skill Track"
   url = ""
-  certificate_url = "https://www.datacamp.com"
-  date_start = "2017-07-01"
-  date_end = "2017-12-21"
+  certificate_url = "https://www.datacamp.com/statement-of-accomplishment/track/d1a3b199175bd4bfeec4ec322e438abf8d367b7f  "
+  date_start = "2018-03-01"
+  date_end = ""
+  description = ""
+  
+[[item]]
+  organization = "DataCamp"
+  organization_url = "https://www.datacamp.com"
+  title = "Machine Learning with R - Skill Track"
+  url = ""
+  certificate_url = "https://www.datacamp.com/statement-of-accomplishment/track/a7e99a19d77fbeb7d144bb13bdb153f19c85c2b5"
+  date_start = "2017-12-01"
+  date_end = ""
   description = ""
 
 +++

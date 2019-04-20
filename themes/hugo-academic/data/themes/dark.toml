@@ -5,9 +5,9 @@ name = "Dark"
 light = false
 
 # Primary
-primary = "hsl(339, 90%, 68%)"
-primary_light = "hsl(339, 90%, 78%)"
-primary_dark = "hsl(339, 90%, 58%)"
+primary = "#2962ff"
+primary_light = "#768fff"
+primary_dark = "#0039cb"
 
 # Menu
 menu_primary = "rgb(20, 22, 34)"
@@ -17,4 +17,4 @@ menu_title = "#fff"
 
 # Home sections
 home_section_odd = "hsla(231, 15%, 18%, 1)"
-home_section_even = "hsla(231, 15%, 16%, 1)"
+  home_section_even = "hsla(231, 15%, 16%, 1)"
