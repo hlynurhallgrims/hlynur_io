@@ -27,7 +27,7 @@ date_format = "Jan 2006"
   description = """
 Data scientist, R-developer and economist working within the Department of Taxation. My work focuses on revenue forecasting via microsimulation and machine learning in R and SQL. 
 
-I also create and maintain things such as the Ministry's Tax-Benefit Microsimulation model and the Ministry's internal R package, as well as developing R-Shiny dashboards and interactive reports.
+I'm also the creator and maintainer of things such as the Ministry's Tax-Benefit Microsimulation model and the Ministry's internal R package, as well as developing R-Shiny dashboards and interactive reports.
 
 
   """
