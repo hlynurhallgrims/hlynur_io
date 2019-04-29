@@ -40,7 +40,7 @@ I'm also the creator and maintainer of some pretty neat things, such as the Mini
   date_start = "2015-02-01"
   date_end = "2016-10-31"
   description = """
-  Statistics and analytics, economic analysis, modeling; writing and co-writing reports, briefs and press releases.
+  In February of 2015 I started an 8-month, paid graduate-level internship at the Federation of Icelandic Industries (SI). During that time I worked on some wonderfully diverse tasks; economic analysis, tax modeling, and web analytics to name a few. Upon graduation I returned to SI as a Data Analyst within the division of High-tech and IP-intensive industries. As an analyst my job was to work with member organizations - where 'the domain specific knowledge lived' - and further translate that knowledge into actionable insights through collecting, aggregating and analyzing data, as well as communicating those insights to stakeholders through reports and briefing notes.
 """
 
 
