@@ -74,4 +74,4 @@ user_groups = ["Researchers", "Visitors"]
 
 +++
 
-I'm Hlynur. I'm a Data Scientist, Economist and R-developer within the Department of Taxation at the Ministry of Finance and Economic Affairs in Iceland.  
+I'm Hlynur H. I'm a Data Scientist, Economist and R-developer within the Department of Taxation at the Ministry of Finance and Economic Affairs in Iceland.  
