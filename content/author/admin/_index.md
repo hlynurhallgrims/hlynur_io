@@ -35,15 +35,15 @@ interests = [
 user_groups = ["Researchers", "Visitors"]
 
 # List qualifications (such as academic degrees)
-[[education.courses]]
-  course = "MA in Political Economy"
-  institution = "Bifröst University"
-  year = 2016
-
-[[education.courses]]
-  course = "BA in Philosophy, Politics & Economics"
-  institution = "Bifröst University"
-  year = 2011
+# [[education.courses]]
+#   course = "MA in Political Economy"
+#   institution = "Bifröst University"
+#   year = 2016
+# .
+# [[education.courses]]
+#   course = "BA in Philosophy, Politics & Economics"
+#   institution = "Bifröst University"
+#   year = 2011
 
 # Social/Academic Networking
 # For available icons, see: https://sourcethemes.com/academic/docs/widgets/#icons
@@ -74,4 +74,4 @@ user_groups = ["Researchers", "Visitors"]
 
 +++
 
-Ég heiti Hlynur. Ég er stjórnmálahagfræðingur að mennt og ég starfa sem sérfræðingur í gagnagreiningu og spálíkanagerð hjá Fjármála- og efnahagsráðuneytinu.
+Ég heiti Hlynur. Ég er stjórnmálahagfræðingur að mennt. Ég starfa sem sérfræðingur í gagnagreiningu og spálíkanagerð hjá Fjármála- og efnahagsráðuneytinu.
