@@ -6,7 +6,7 @@ active = true  # Activate this widget? true/false
 weight = 50  # Order that this section will appear.
 
 title = "Skírteini"
-subtitle = ""
+subtitle = "Ég er með netkúrsafíkn. Hér eru nokkur af þeim skírteinum sem ég hef lokið við."
 
 # Date format
 #   Refer to https://sourcethemes.com/academic/docs/customization/#date-format
