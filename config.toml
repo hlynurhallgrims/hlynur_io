@@ -2,5 +2,5 @@ theme = "hugo-academic"
 baseURL = "/"
 languageCode = "en-us"
 title = "Hlynur Hallgrímsson"
-color_theme = "dark"
+color_theme = "rose"
 ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
