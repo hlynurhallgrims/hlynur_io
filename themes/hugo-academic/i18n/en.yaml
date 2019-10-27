@@ -81,7 +81,7 @@
 # Accomplishments widget
 
 - id: see_certificate
-  translation: See certificate
+  translation: Sjá skírteini
 
 # Experience widget
 
@@ -105,13 +105,13 @@
 # Contact widget
 
 - id: contact_name
-  translation: Name
+  translation: Nafn
 
 - id: contact_email
-  translation: Email
+  translation: Netfang
 
 - id: contact_message
-  translation: Message
+  translation: Skilaboð
 
 - id: contact_send
   translation: Send
