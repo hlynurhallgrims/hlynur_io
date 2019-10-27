@@ -5,8 +5,8 @@ headless = true  # This file represents a page section.
 active = true  # Activate this widget? true/false
 weight = 130  # Order that this section will appear.
 
-title = "Contact"
-subtitle = ""
+title = "Hafðu samband"
+subtitle = "Eða þú getur sent mér línu á Twitter"
 
 # Automatically link email and phone?
 autolink = true
