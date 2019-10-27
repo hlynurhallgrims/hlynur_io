@@ -24,10 +24,10 @@ email = "hlynurh@gmail.com"
 # List (academic) interests or hobbies
 interests = [
   "R",
-  "Microsimulation",
-  "Machine Learning",
+  "Örhermilíkön",
+  "Vélnám með viðgjafaraðferðum",
   "SQL",
-  "Data Visualization"
+  "Myndræn framsetning gagna"
 ]
 
 # Organizational groups that you belong to (for People widget)
@@ -74,4 +74,4 @@ user_groups = ["Researchers", "Visitors"]
 
 +++
 
-Ég heiti Hlynur. Ég er stjórnmálahagfræðingur að mennt. Ég starfa sem sérfræðingur í gagnagreiningu og spálíkanagerð hjá Fjármála- og efnahagsráðuneytinu.
+Ég heiti Hlynur og er stjórnmálahagfræðingur að mennt. Ég starfa sem sérfræðingur í gagnagreiningu og spálíkanagerð hjá Fjármála- og efnahagsráðuneytinu.
