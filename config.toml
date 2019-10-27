@@ -1,5 +1,5 @@
 theme = "hugo-academic"
-baseURL = "https://hlynur.io"
+baseURL = "https://hlynur.io/"
 languageCode = "en-us"
 title = "Hlynur Hallgrímsson"
 color_theme = "dark"
