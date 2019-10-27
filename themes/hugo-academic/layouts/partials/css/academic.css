@@ -482,7 +482,7 @@ a[data-fancybox] img {
 
 .home-section {
   background-color: {{ .Get "home_section_odd" }};
-  padding: 40px 0 40px 0;
+  padding: 90px 0 90px 0;
   animation: intro 0.3s both;
   animation-delay: 0.15s;
 }
@@ -534,7 +534,7 @@ a[data-fancybox] img {
 }
 
 .home-section:first-of-type {
-  padding-top: 30px;
+  padding: 30px 0 40px 0;
 }
 
 .home-section:nth-of-type(even) {
