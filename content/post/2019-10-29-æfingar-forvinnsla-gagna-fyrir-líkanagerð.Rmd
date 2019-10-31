@@ -227,7 +227,7 @@ test_set_yj       <- glass_yj[-train_ind, ]
 
 ```
 
-Þegar við höfum skilgreint þjálfunarsett og prófunarsett hefjumst við handa við að þjálfa líkanið á hráu, óunnu gögnunum. Við notumst við `caret` pakkann, en hann er samansafn tóla til spálíkanagerðar. Við notumst einnig við `caretEnsemble` pakkann, sem er allajafna notaður til að búa til samleik spálíkana. Með samleik er átt við það að búa til eitt líkan úr mörgum líkönum til að bæta spánákvæmni. Hér ætlum við hinsvegar einungis að nota hann til að halda utan um mismunandi reiknirit sem við ætlum að beita á gögnin. `knn` er næsta-nágranna reiknirit^[(e. nearest neighbour)], `treebag` er *bagged trees* reiknirit, `rf` er slembiskógur^[(e. random forest)], `rpart` er einfalt ákvarðanatré^[(e. decision tree)], `svmRadial` er stuðningsvigra reiknirit með kúlulaga ákvörðunarskilum^[(e. support vector machines using a radial decision boundary)]. `xgbTree` kallar til `xgboost` reikniritið sem framkvæmir ofurmögnun stiguls^[(e. extreme gradient boosting)]. 
+Þegar við höfum skilgreint þjálfunarsett og prófunarsett hefjumst við handa við að þjálfa líkanið á hráu, óunnu gögnunum. Við notumst við `caret` pakkann, en hann er samansafn tóla til spálíkanagerðar. Við notumst einnig við `caretEnsemble` pakkann, sem er allajafna notaður til að búa til samleik spálíkana. Með samleik er átt við það að búa til eitt líkan úr mörgum líkönum til að bæta spánákvæmni. Hér ætlum við hinsvegar einungis að nota hann til að halda utan um mismunandi reiknirit sem við ætlum að beita á gögnin. `knn` er næsta-nágranna reiknirit^[(e. nearest neighbour)], `treebag` er *bagged trees* reiknirit, `rf` er slembiskógur^[(e. random forest)], `rpart` er einfalt ákvarðanatré^[(e. decision tree)], `svmRadial` er stuðningsvigra reiknirit með kúlulaga ákvörðunarskilum^[(e. support vector machines using a radial decision boundary)]. `xgbTree` aðferðin kallar til `xgboost` reikniritið sem framkvæmir ofurmögnun stiguls^[(e. extreme gradient boosting)]. 
 
 Við notumst við 3 sinnum 10 brota kross prófun^[(e. cross-validation)] í öllum tilvikum til að reyna að tryggja að við séum ekki að ofsníða^[(e. over-fit)] að þjálfunargögnunum.
 
@@ -238,7 +238,7 @@ styring_reiknirita <- trainControl(method="repeatedcv", number=10, repeats=3, in
 listi_reiknirita <- c('knn', 'treebag', 'rf', 'rpart', 'svmRadial', 'xgbTree') 
 ```
 
-Hér nota ég 7 kjarna til að skipta útreikningunum niður á. Ef þú hyggst keyra þessa útreikninga á eigin vélbúnaði þarf að taka mið af fjölda kjarna í örgjörva vélbúnaðarins sem útreikningarnir fara fram á. 
+Hér nota ég 7 kjarna til að skipta útreikningunum niður á. Ef þú hyggst keyra þessa útreikninga á eigin vélbúnaði þarf að taka mið af fjölda kjarna í örgjörva vélbúnaðarins sem útreikningarnir fara fram á. Að því sögðu er vert að nefna að formúluviðmótið hægir talsvert á útreikningum á `xgboost`, þannig í raun væri vond hugmynd að kópera þennan kóða beint. En hey, ég er búinn að þjálfa líkönin þegar þessi orð eru skrifuð, þannig það skiptir ekki öllu máli. 
 
 ```{r training_raw, cache = TRUE, dependson = "styring"}
 training_set_raw$Type <- as.factor(training_set_raw$Type)
