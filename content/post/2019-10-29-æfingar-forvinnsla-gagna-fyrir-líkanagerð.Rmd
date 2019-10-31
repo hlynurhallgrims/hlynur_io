@@ -205,7 +205,7 @@ glass_saman %>%
 
 ```
 
-## Eru forvinnsluaðgerðirnar líklegar til að bæta spár um flokkun glersins?
+### Eru forvinnsluaðgerðirnar líklegar til að bæta spár um flokkun glersins?
 
 Til þess að svara því liggur beinast við að forvinna gögnin eftir mismunandi uppskriftum og spá því næst fyrir um tegundir glers út frá skýribreytunum. Við búum til þjálfunarsett og prófunarsett til að vinna með. `training_set_raw` og `test_set_raw` eru grunngögnin án nokkurar forvinnslu. Í `training_set_cs` og `test_set_cs` eru gögnin miðjuð og sköluð^[(e. centering and scaling)]. Í `training_set_yj` og `test_set_yj`er notast er við Yeo-Johnson umbreytingu. Í `training_set_both` og `test_set_both` er notast við miðjun og skölun, og Yeo-Johnson umbreytingu. 
 
