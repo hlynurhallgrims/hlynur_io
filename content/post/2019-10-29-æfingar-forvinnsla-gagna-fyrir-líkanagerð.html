@@ -1,0 +1,367 @@
+---
+title: 'Vandamál í vélnámi: Flokkum gler!'
+subtitle: 'Forvinnsla gagna fyrir líkanagerð'
+author: Hlynur Hallgrímsson
+date: '2019-10-29'
+slug: æfingar-forvinnsla-gagna-fyrir-líkanagerð
+categories:
+  - R
+  - Æfingar
+tags:
+  - R
+  - Vélnám
+image:
+  caption: ''
+  focal_point: ''
+editor_options: 
+  chunk_output_type: console
+---
+
+
+
+<p>Vélnámi með viðgjafaraðferð<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> má skipta í tvær tegundir vandamála. Annars vegar aðhvarfsvandamál<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>, og hins vegar flokkunarvandamál<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a>. Í þessari færslu ætla ég að vinna mig í gegnum flokkunarvandamál, þar sem áherslan verður á að skoða forvinnsluaðgerðir<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a>. Æfingin er fengin úr þriðja kafla bókarinnar <a href="http://appliedpredictivemodeling.com/">Applied Predictive Modeling</a> eftir Max Kuhn og Kjell Johnson. Nánar tiltekið er þetta verkefni <strong>3.1</strong>.</p>
+<div id="flokkum-gler" class="section level3">
+<h3>Flokkum gler</h3>
+<p>Í þessu fyrsta vandamáli okkar í vélnámi notumst við við gagnasett úr <a href="https://archive.ics.uci.edu">The UC Irvine Machine Learning Repository</a> sem snýr að greiningu mismunandi tegunda glers út frá ljósbrotsstuðli og samspili 8 mismunandi frumefna: <strong>Na, Mg Al, Si, K, Ca, Ba</strong> og <strong>Fe</strong>. Ljósbrotsstuðullinn og frumefnin eru skýribreyturnar og svarbreytan er tegund glersins. Sumsé, við viljum geta búið til líkan þannig að ef við höfum mælingar fyrir frumefnin og ljósbrotsstuðulinn getum við spáð fyrir um hvaða flokki þetta gler tilheyrir. Helst með þokkalegri nákvæmni.</p>
+<p>Við nálgumst gögnin í <code>mlbench</code> pakkann, en auk hans hlöðum við inn öðrum pökkum sem við munum nota við úrvinnslu verkefnisins.</p>
+<pre class="r"><code>library(mlbench)
+library(AppliedPredictiveModeling)
+library(tidyverse)
+library(tidymodels)
+library(corrplot)
+library(caret)
+library(caretEnsemble)
+library(viridis)
+library(doParallel)
+library(janitor)</code></pre>
+<p>Nú þegar við höfum hlaðið inn <code>mlbench</code> pakkanum getum við sótt <code>Glass</code> gögnin með <code>data()</code> aðgerðinni og skoðum strúktúr gagnanna með <code>str()</code> fallinu.</p>
+<pre class="r"><code>data(Glass)
+str(Glass)</code></pre>
+<pre><code>## &#39;data.frame&#39;:    214 obs. of  10 variables:
+##  $ RI  : num  1.52 1.52 1.52 1.52 1.52 ...
+##  $ Na  : num  13.6 13.9 13.5 13.2 13.3 ...
+##  $ Mg  : num  4.49 3.6 3.55 3.69 3.62 3.61 3.6 3.61 3.58 3.6 ...
+##  $ Al  : num  1.1 1.36 1.54 1.29 1.24 1.62 1.14 1.05 1.37 1.36 ...
+##  $ Si  : num  71.8 72.7 73 72.6 73.1 ...
+##  $ K   : num  0.06 0.48 0.39 0.57 0.55 0.64 0.58 0.57 0.56 0.57 ...
+##  $ Ca  : num  8.75 7.83 7.78 8.22 8.07 8.07 8.17 8.24 8.3 8.4 ...
+##  $ Ba  : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ Fe  : num  0 0 0 0 0 0.26 0 0 0 0.11 ...
+##  $ Type: Factor w/ 6 levels &quot;1&quot;,&quot;2&quot;,&quot;3&quot;,&quot;5&quot;,..: 1 1 1 1 1 1 1 1 1 1 ...</code></pre>
+<p>Við sjáum að <code>Glass</code> er gagnarammi með 214 athugunum á 10 breytum. Þar af eru níu talnabreytur og ein flokkabreyta. Flokkabreytan er svarbreytan okkar, þ.e. tegundir glersins, og eru 6 mismunandi tegundir.</p>
+<p>Nú skulum við vinda okkur í verkefnin.</p>
+<div id="leibeiningarnar-eru-eftirfarandi" class="section level4">
+<h4>Leiðbeiningarnar eru eftirfarandi</h4>
+<ul>
+<li><ol style="list-style-type: lower-alpha">
+<li>Using vizualisations, explore the predictor variables to understand their distributions as well as the relationships between predictors</li>
+</ol></li>
+<li><ol start="2" style="list-style-type: lower-alpha">
+<li>Do there appear to be any outliers in the data? Are any predictors skewed?</li>
+</ol></li>
+<li><ol start="3" style="list-style-type: lower-alpha">
+<li>Are there any relevant transformations of one or more predictors that might improve the classification model?</li>
+</ol></li>
+</ul>
+<p>Eins og svo oft er ef til vill best hér að byrja með tíðniriti eða þéttniriti til að sjá dreifingu gilda innan hverrar skýribreytu. Við gerum eitt þéttnirit og eitt boxplott.</p>
+<pre class="r"><code>#Þéttnirit
+Glass %&gt;%
+  gather(-Type, key = &quot;efni&quot;, value = &quot;gildi&quot;) %&gt;%
+  ggplot(mapping = aes(x = gildi)) +
+    geom_density() +
+    facet_wrap(~efni, scales = &quot;free&quot;)</code></pre>
+<p><img src="/post/2019-10-29-æfingar-forvinnsla-gagna-fyrir-líkanagerð_files/figure-html/3_1_tidnirit-1.png" width="672" /></p>
+<pre class="r"><code>#Boxplott
+Glass %&gt;%
+  gather(-Type, key = &quot;efni&quot;, value = &quot;gildi&quot;) %&gt;%
+  ggplot(mapping = aes(x = efni, y = gildi)) +
+  geom_boxplot()</code></pre>
+<p><img src="/post/2019-10-29-æfingar-forvinnsla-gagna-fyrir-líkanagerð_files/figure-html/3_1_tidnirit-2.png" width="672" /></p>
+<p>Við sjáum að þónokkur skekking er til staðar fyrir efnin <strong>Ba, Ca, Fe</strong> og ljósbrotsstuðulinn <strong>RI</strong>. Auk þess eru <strong>K</strong> og <strong>Mg</strong> tvítoppa. Þá virðist vera nokkuð afgerandi útlagi í <strong>K</strong>.</p>
+<p>Því næst skoðum við fylgnirit milli skýribreytanna og notum til þess <code>corrplot</code> pakkann sem við höfum nú þegar hlaðið inn. Röðun breytanna á plottinu er fengin með <code>hclust</code> klösunarreikniriti.</p>
+<pre class="r"><code>#Skilgreinum hvaða dálkar innihalda skýribreytur svo hægt sé að vísa til þeirra með nafni
+skyribreytur &lt;- names(Glass)[1:9]
+
+#Til að laga corrplot er merkingum ása leyft að fara yfir spássíur með eftirfarandi breytingu
+par(xpd = TRUE)
+#Fylgniplott
+fylgni &lt;- cor(Glass[, skyribreytur])
+corrplot(fylgni, method = &quot;square&quot;, mar = c(1, 1, 1, 1), order = &quot;hclust&quot;)</code></pre>
+<p><img src="/post/2019-10-29-æfingar-forvinnsla-gagna-fyrir-líkanagerð_files/figure-html/3_1_fylgnirit-1.png" width="672" /></p>
+<p>Við sjáum strax að það er eitthvað um fylgni milli skýribreyta. Sterkust er greinilega jákvæð fylgni milli ljósbrotsstuðulsins <strong>RI</strong> og svo <strong>Ca</strong> og þvínæst neikvæð fylgni milli ljósbrotsstuðulsins <strong>RI</strong> og <strong>Si</strong>. Marglínuleiki (fylgni milli skýribreytanna) getur valdið vandræðum í hinum ýmsu líkönum og þá skiptir ekki máli hvort fylgnin sé neikvæð eða jákvæð. Til frekari glöggvunar setjum við fram fylgnina á tvo aðra vegu, með hitakorti og súluriti.</p>
+<pre class="r"><code>fylgni_df &lt;- as_tibble(fylgni) %&gt;% 
+  mutate(names = rownames(fylgni)) %&gt;% 
+  gather(-names, key = &quot;key&quot;, value = &quot;Fylgni&quot;) %&gt;% 
+  mutate(var_1 = pmin(names, key), # Setjum breytuna sem er á undan í stafrófinu í dálkinn var_1
+         var_2 = pmax(names, key)) %&gt;% # og breytuna sem er á eftir í stafrófinu í dálkinn var_2
+  distinct(var_1, var_2, Fylgni) # og er hægt að ná í einstakar samsetningar með distinct
+
+#Hitakort
+fylgni_df %&gt;%
+  mutate(Fylgni = if_else(var_1 == var_2, NA_real_, Fylgni)) %&gt;%
+  ggplot(mapping = aes(x = var_1, y = var_2, fill = abs(Fylgni))) +
+  geom_tile() +
+  scale_fill_viridis()</code></pre>
+<p><img src="/post/2019-10-29-æfingar-forvinnsla-gagna-fyrir-líkanagerð_files/figure-html/3_1_fylgni_stoplarit-1.png" width="672" /></p>
+<pre class="r"><code>fylgni_df_utd &lt;- fylgni_df %&gt;% 
+  filter(var_1 != var_2) %&gt;% # Fjarlægjum fylgni breytu við sjálfa sig 
+  arrange(Fylgni) %&gt;% 
+  unite(var_1, var_2, sep = &quot;/&quot;, col = &quot;Efni&quot;)
+
+nota_palette &lt;- c(&quot;#bbbbbb&quot;, &quot;#F8766D&quot;, &quot;#00BFC4&quot;)
+throskuldur &lt;- 0.32
+
+#Súlurit
+fylgni_df_utd %&gt;% 
+  mutate(Skipting = case_when(Fylgni &gt; throskuldur ~ &quot;Tiltölulega sterk jákvæð fylgni&quot;,
+                              Fylgni &lt; -throskuldur ~ &quot;Tiltölulega sterk neikvæð fylgni&quot;,
+                              TRUE ~ &quot;Minni fylgni&quot;)) %&gt;% 
+  ggplot(mapping = aes(x = as.numeric(rownames(.)), y = Fylgni, fill = Skipting)) +
+  geom_bar(stat = &quot;identity&quot;) +
+  scale_x_continuous(breaks = NULL, labels = NULL, name = &quot;Samsetningar&quot;) +
+  scale_fill_manual(values = nota_palette) +
+  geom_hline(yintercept = 0)</code></pre>
+<p><img src="/post/2019-10-29-æfingar-forvinnsla-gagna-fyrir-líkanagerð_files/figure-html/3_1_fylgni_stoplarit-2.png" width="672" /></p>
+<pre class="r"><code>#Súlurit frh.
+fylgni_df_utd %&gt;% 
+  filter(abs(Fylgni) &gt; 0.32) %&gt;% # Fjarlægjum fylgni sem er ekki meiri en +- 0.32
+  mutate(Formerki = if_else(Fylgni &gt;= 0, &quot;Jákvætt&quot;, &quot;Neikvætt&quot;)) %&gt;% 
+  ggplot(mapping = aes(x = as.numeric(rownames(.)), y = Fylgni, fill = Formerki)) +
+  geom_bar(stat = &quot;identity&quot;) +
+  geom_text(mapping = aes(label = Efni, vjust = if_else(Fylgni &gt; 0, -0.9, 1.6))) +
+  scale_x_continuous(breaks = NULL, labels = NULL, name = &quot;Samsetningar&quot;) +
+  geom_hline(yintercept = 0) +
+  coord_cartesian(ylim = c(-0.6, 0.9))</code></pre>
+<p><img src="/post/2019-10-29-æfingar-forvinnsla-gagna-fyrir-líkanagerð_files/figure-html/3_1_fylgni_stoplarit-3.png" width="672" /></p>
+<p>Þá sjáum við að ef að við notum ljósbrotsstuðul <strong>RI</strong> sem skýribreytu fyrir tegund glersins, þá er efnið <strong>Ca</strong> að fara að veita okkur minnstar viðbótarupplýsingar, og öfugt. Eins og ég nefndi hér að ofan getur marglínuleiki valdið okkur vandræðum. Þannig væri líklega okkar fyrsta verk að fjarlægja ljósbrotsstuðulinn <strong>RI</strong>, þar sem sterk fylgni er milli hans og efnisins <strong>Ca</strong>, og jafnframt tiltölulega sterk neikvæð fylgni milli hans og efnisins <strong>Si</strong>. Það væri þá til að koma í veg fyrir marglínuleika fyrir þau líkön sem slíkt hefur áhrif á, en ef til vill væri það líka eftirsóknarvert til einföldunar þó að við værum með til dæmis slembiskógalíkan, sem marglínuleiki hefur ekki áhrif á. Það að fækka skýribreytum einfaldar líkanið og styttir reiknitíma. Að því sögðu þá er fókusinn í þessu dæmi á forvinnsluaðgerðir til að leiðrétta fyrir skekkingu í dreifingu<a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a> - þannig við látum það ógert að henda út ljósbrotsstuðlinum að svo stöddu.</p>
+</div>
+</div>
+<div id="forvinnsluagerir" class="section level2">
+<h2>Forvinnsluaðgerðir</h2>
+<div id="til-a-leiretta-fyrir-skekkingu-i-dreifingu" class="section level3">
+<h3>Til að leiðrétta fyrir skekkingu í dreifingu</h3>
+<p>Til að leiðrétta fyrir skekkingu í dreifingu skýribreytanna væri ákjósanlegt að geta beitt fyrir sig Box-Cox umbreytingu. Til þess þurfa öll gildi að vera stærri en núll. Því þurfum við að athuga hvort einhver núllgildi eða neikvæð gildi leynist í einhverjum skýribreytanna. Til þess að auðvelda okkur það erum við sniðug og notumst við <code>map_dbl()</code> fallið úr <code>purrr</code> pakkanum. Við höfum þegar hlaðið inn <code>purrr</code> hér að ofan um leið og við hlóðum inn <code>tidyverse</code> pakkasamstæðunni.</p>
+<pre class="r"><code>Glass[, skyribreytur] %&gt;% 
+  map_dbl(~sum(. &lt;= 0))</code></pre>
+<pre><code>##  RI  Na  Mg  Al  Si   K  Ca  Ba  Fe 
+##   0   0  42   0   0  30   0 176 144</code></pre>
+<p>Einungis <strong>RI, Na, Al, Si</strong> og <strong>Ca</strong> innihalda bara jákvæð gildi, en hin ekki. Við sjáum því strax að Box-Cox umbreyting er ekki valkostur fyrir allar skýribreyturnar, né þá heldur log-umbreyting. Þá prófum við Yeo-Johnson umbreytingu, en hún er ekki alls ósvipuð Box-Cox nema fyrir það að gildi mega vera neikvæð eða núll. Raunar er Yeo-Johnson umbreytingin í reynd Box-Cox umbreyting í þeim tilfellum þar sem öll gildi breytu eru jákvæð. Til þess að kalla fram Yeo-Johnson umbreytingu getum við notað <code>preProcess()</code> fallið úr <code>caret</code> pakkanum, sem skrifaður er af Max Kuhn, öðrum höfundi <em>Applied Predictive Modeling</em> sem verkefnið er úr.</p>
+<p>Við ætlum einnig að prófa að miðja og skala gögnin.</p>
+<pre class="r"><code>pp_object_Glass_both &lt;- preProcess(Glass, method = c(&quot;center&quot;, &quot;scale&quot;, &quot;YeoJohnson&quot;))
+
+glass_both &lt;- predict(pp_object_Glass_both, Glass)
+
+pp_object_Glass_yj &lt;- preProcess(Glass, method = c(&quot;YeoJohnson&quot;))
+
+glass_yj &lt;- predict(pp_object_Glass_yj, Glass)
+
+pp_object_Glass_cs &lt;- preProcess(Glass, method = c(&quot;center&quot;, &quot;scale&quot;))
+
+glass_cs &lt;- predict(pp_object_Glass_cs, Glass)</code></pre>
+<p>Prófum sambærilegt þéttnirit og áður. Berum saman tvær mismunandi uppskriftir að forvinnslu. Annars vegar miðjun og skölun, og hins vegar miðjun, skölun og Yeo-Johnson umbreytingu. Hér er búið að kommenta út þrjú önnur þéttnirit, svo þau birtist ekki.</p>
+<pre class="r"><code># glass_both %&gt;% 
+#   gather(-Type, key = &quot;efni&quot;, value = &quot;gildi&quot;) %&gt;%
+#   ggplot(mapping = aes(x = gildi)) +
+#     geom_density() +
+#     facet_wrap(~efni, scales = &quot;free&quot;)
+# 
+# 
+# glass_yj %&gt;% 
+#   gather(-Type, key = &quot;efni&quot;, value = &quot;gildi&quot;) %&gt;%
+#   ggplot(mapping = aes(x = gildi)) +
+#     geom_density() +
+#     facet_wrap(~efni, scales = &quot;free&quot;)
+# 
+# glass_cs %&gt;% 
+#   gather(-Type, key = &quot;efni&quot;, value = &quot;gildi&quot;) %&gt;%
+#   ggplot(mapping = aes(x = gildi)) +
+#     geom_density() +
+#     facet_wrap(~efni, scales = &quot;free&quot;)
+
+glass_both_tidy &lt;- glass_both %&gt;% 
+  gather(-Type, key = &quot;efni&quot;, value = &quot;gildi&quot;)
+
+glass_cs_tidy &lt;- glass_cs %&gt;% 
+    gather(-Type, key = &quot;efni&quot;, value = &quot;gildi&quot;)
+
+glass_saman &lt;- bind_rows(&quot;Fyrir&quot; = glass_cs_tidy, &quot;Eftir&quot; = glass_both_tidy, .id = &quot;Y-J umbreyting&quot;)
+
+glass_saman %&gt;% 
+  ggplot(mapping = aes(x = gildi, color = `Y-J umbreyting`, fill = `Y-J umbreyting`)) +
+    geom_density(alpha = 0.2) +
+    facet_wrap(~efni, scales = &quot;free&quot;)</code></pre>
+<p><img src="/post/2019-10-29-æfingar-forvinnsla-gagna-fyrir-líkanagerð_files/figure-html/unnamed-chunk-1-1.png" width="672" /></p>
+</div>
+</div>
+<div id="eru-einhverjar-forvinnsluagerir-liklegar-til-a-bta-spar-um-flokkun-glersins" class="section level1">
+<h1>Eru einhverjar forvinnsluaðgerðir líklegar til að bæta spár um flokkun glersins?</h1>
+<p>Til þess að svara því liggur beinast við að forvinna gögnin eftir mismunandi uppskriftum og spá því næst fyrir um tegundir glers út frá skýribreytunum. Við búum til þjálfunarsett og prófunarsett til að vinna með. <code>training_set_raw</code> og <code>test_set_raw</code> eru grunngögnin án nokkurar forvinnslu. Í <code>training_set_cs</code> og <code>test_set_cs</code> eru gögnin miðjuð og sköluð<a href="#fn6" class="footnote-ref" id="fnref6"><sup>6</sup></a>. Í <code>training_set_yj</code> og <code>test_set_yj</code>er notast er við Yeo-Johnson umbreytingu. Í <code>training_set_both</code> og <code>test_set_both</code> er notast við miðjun og skölun, og Yeo-Johnson umbreytingu.</p>
+<p>Við tökum 85% af gögnunum og notum þau sem þjálfunarsett og restin verður prófunarsett.</p>
+<pre class="r"><code>train_ind &lt;- caret::createDataPartition(y = glass_cs$Type, p = 0.85, list = FALSE)
+pred_vars &lt;- 1:9 # Dálkanúmer skýribreytanna
+
+training_set_raw  &lt;- Glass[train_ind, ]
+training_set_both &lt;- glass_both[train_ind, ]
+training_set_cs   &lt;- glass_cs[train_ind, ]
+training_set_yj   &lt;- glass_yj[train_ind, ]
+
+test_set_raw      &lt;- Glass[-train_ind, ]
+test_set_both     &lt;- glass_both[-train_ind, ]
+test_set_cs       &lt;- glass_cs[-train_ind, ]
+test_set_yj       &lt;- glass_yj[-train_ind, ]</code></pre>
+<p>Þegar við höfum skilgreint þjálfunarsett og prófunarsett hefjumst við handa við að þjálfa líkanið á hráu, óunnu gögnunum. Við notumst við <code>caret</code> pakkann, en hann er samansafn tóla til spálíkanagerðar. Við notumst einnig við <code>caretEnsemble</code> pakkann, sem er allajafna notaður til að búa til samleik spálíkana. Með samleik er átt við það að búa til eitt líkan úr mörgum líkönum til að bæta spánákvæmni. Hér ætlum við hinsvegar einungis að nota hann til að halda utan um mismunandi reiknirit sem við ætlum að beita á gögnin. <code>knn</code> er næsta-nágranna reiknirit<a href="#fn7" class="footnote-ref" id="fnref7"><sup>7</sup></a>, <code>treebag</code> er <em>bagged trees</em> reiknirit, <code>rf</code> er slembiskógur<a href="#fn8" class="footnote-ref" id="fnref8"><sup>8</sup></a>, <code>rpart</code> er einfalt ákvarðanatré<a href="#fn9" class="footnote-ref" id="fnref9"><sup>9</sup></a>, <code>svmRadial</code> er stuðningsvigra reiknirit með kúlulaga ákvörðunarskilum<a href="#fn10" class="footnote-ref" id="fnref10"><sup>10</sup></a>. <code>xgbTree</code> kallar til <code>xgboost</code> reikniritið sem framkvæmir ofurmögnun stiguls.</p>
+<p>Við notumst við 3 sinnum 10 brota kross prófun<a href="#fn11" class="footnote-ref" id="fnref11"><sup>11</sup></a> í öllum tilvikum.</p>
+<pre class="r"><code>styring_reiknirita &lt;- trainControl(method=&quot;repeatedcv&quot;, number=10, repeats=3, index = createMultiFolds(training_set_raw$Type, k = 10, times = 3),
+                                   savePredictions=&quot;final&quot;, classProbs=TRUE)
+
+listi_reiknirita &lt;- c(&#39;knn&#39;, &#39;treebag&#39;, &#39;rf&#39;, &#39;rpart&#39;, &#39;svmRadial&#39;, &#39;xgbTree&#39;) </code></pre>
+<p>Hér nota ég 7 kjarna til að skipta útreikningunum niður á. Ef þú hyggst keyra þessa útreikninga á eigin vélbúnaði þarf að taka mið af fjölda kjarna í örgjörva vélbúnaðarins sem útreikningarnir fara fram á.</p>
+<pre class="r"><code>training_set_raw$Type &lt;- as.factor(training_set_raw$Type)
+levels(training_set_raw$Type) &lt;- c(&quot;One&quot;, &quot;Two&quot;, &quot;Three&quot;, &quot;Five&quot;, &quot;Six&quot;, &quot;Seven&quot;)
+
+cl &lt;- makeCluster(7)
+registerDoParallel(cl)
+
+models_raw &lt;- caretList(Type ~ ., data = training_set_raw, 
+                        trControl = styring_reiknirita, 
+                        methodList = listi_reiknirita)
+results_raw &lt;- resamples(models_raw)
+
+stopCluster(cl)</code></pre>
+<p>Því næst gerum við hið nákvæmlega sama fyrir gagnasettið sem hefur verið skalað og miðjað.</p>
+<pre class="r"><code>training_set_cs$Type &lt;- as.factor(training_set_cs$Type)
+levels(training_set_cs$Type) &lt;- c(&quot;One&quot;, &quot;Two&quot;, &quot;Three&quot;, &quot;Five&quot;, &quot;Six&quot;, &quot;Seven&quot;)
+
+cl &lt;- makeCluster(7)
+registerDoParallel(cl)
+
+models_cs &lt;- caretList(Type~., data=training_set_cs,
+                       trControl = styring_reiknirita,
+                       methodList = listi_reiknirita)
+
+results_cs &lt;- resamples(models_cs)
+
+stopCluster(cl)</code></pre>
+<p>Og því næst gagnasettið með Yeo-Johnson umbreytingu.</p>
+<pre class="r"><code>training_set_yj$Type &lt;- as.factor(training_set_yj$Type)
+levels(training_set_yj$Type) &lt;- c(&quot;One&quot;, &quot;Two&quot;, &quot;Three&quot;, &quot;Five&quot;, &quot;Six&quot;, &quot;Seven&quot;)
+
+cl &lt;- makeCluster(7)
+registerDoParallel(cl)
+
+models_yj &lt;- caretList(Type~., data=training_set_yj,
+                       trControl = styring_reiknirita,
+                       methodList = listi_reiknirita)
+
+results_yj &lt;- resamples(models_yj)
+
+stopCluster(cl)</code></pre>
+<p>Og svo fyrir gögnin með miðjun og skölun, og Yeo-Johnson umbreytingu.</p>
+<pre class="r"><code>training_set_both$Type &lt;- as.factor(training_set_both$Type)
+levels(training_set_both$Type) &lt;- c(&quot;One&quot;, &quot;Two&quot;, &quot;Three&quot;, &quot;Five&quot;, &quot;Six&quot;, &quot;Seven&quot;)
+
+cl &lt;- makeCluster(7)
+registerDoParallel(cl)
+
+models_both &lt;- caretList(Type~., data=training_set_both,
+                         trControl = styring_reiknirita,
+                         methodList = listi_reiknirita)
+
+results_both &lt;- resamples(models_both)
+
+stopCluster(cl)</code></pre>
+<p>Þegar við höfum þjálfað áðurnefnd líkön á gögnum með mismunandi ‘forvinnslu-uppskriftum’ skoðum við áhrif forvinnslu á spánákvæmni. Í stað þess að nota bara nákæmni<a href="#fn12" class="footnote-ref" id="fnref12"><sup>12</sup></a> (hlutfall þeirra athugana sem líkan flokkar rétt) heldur skoðum við einnig Cohen’s Kappa, sem er mælikvarði á nákvæmni líkansins umfram vænta nákvæmni. Þá er átt við að í tilvikum þar sem eru einungis tveir flokkar má vænta að slembiflokkari myndi flokka athugun í réttan flokk í helmingi tilvika.</p>
+<p>Cohen’s kappa er reiknað á eftirfarandi hátt.</p>
+<p><span class="math display">\[ Kappa = \frac{Nákvæmni_{reiknuð} - Nákvæmni_{vænt}}{1 - Nákvæmni_{vænt}} \]</span></p>
+<pre class="r"><code>nidurstodur &lt;- list(&quot;hrátt&quot; = results_raw$values,
+     &quot;cs&quot; = results_cs$values,
+     &quot;yj&quot; = results_yj$values,
+     &quot;bæði&quot; = results_both$values) %&gt;% 
+  map(~as_tibble(.)) %&gt;%
+  map(~set_names(., ~str_replace(., &quot;~&quot;, &quot;_&quot;))) %&gt;% 
+  bind_rows(.id = &quot;pre_process&quot;) %&gt;% 
+  group_by(pre_process) %&gt;% 
+  summarize_at(.vars = vars(-1),
+               .funs = mean) %&gt;% 
+  pivot_longer(-pre_process, names_to = &quot;model_metric&quot;, values_to = &quot;value&quot;) %&gt;%
+  arrange(model_metric, pre_process) %&gt;% 
+  separate(col = model_metric, into = c(&quot;model&quot;, &quot;metric&quot;), sep = &quot;_&quot;) %&gt;% 
+  mutate(pre_process = fct_relevel(pre_process, &quot;hrátt&quot;, &quot;cs&quot;, &quot;yj&quot;, &quot;bæði&quot;))
+
+nidurstodur %&gt;% 
+  filter(metric == &quot;Kappa&quot;) %&gt;% 
+  ggplot(aes(x = pre_process, y = value, fill = pre_process)) +
+  geom_col() +
+  facet_wrap(~model) +
+  labs(title = &quot;Cohen&#39;s Kappa eftir forvinnsluaðferð&quot;)</code></pre>
+<p><img src="/post/2019-10-29-æfingar-forvinnsla-gagna-fyrir-líkanagerð_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
+<pre class="r"><code>nidurstodur %&gt;% 
+  filter(metric == &quot;Accuracy&quot;) %&gt;% 
+  ggplot(aes(x = pre_process, y = value, fill = pre_process)) +
+  geom_col() +
+  facet_wrap(~model) +
+  labs(title = &quot;Nákvæmni eftir forvinnsluaðferð&quot;)</code></pre>
+<p><img src="/post/2019-10-29-æfingar-forvinnsla-gagna-fyrir-líkanagerð_files/figure-html/unnamed-chunk-2-2.png" width="672" /></p>
+<pre class="r"><code>nidurstodur %&gt;% 
+  filter(metric == &quot;Accuracy&quot;) %&gt;% 
+  group_by(model) %&gt;% 
+  mutate(centered = value - mean(value)) %&gt;% 
+  ggplot(aes(x = pre_process, y = centered, fill = pre_process)) +
+  geom_hline(yintercept = 0) +
+  geom_col() +
+  facet_wrap(~model) +
+  labs(title = &quot;Frávik frá meðalnákvæmni hvers reiknirits&quot;)</code></pre>
+<p><img src="/post/2019-10-29-æfingar-forvinnsla-gagna-fyrir-líkanagerð_files/figure-html/unnamed-chunk-2-3.png" width="672" /></p>
+<p>Þannig sjáum við að slembiskógareikniritið <code>rf</code> skilar besta líkaninu fyrir okkur. Við sjáum jafnframt að sú forvinnsluaðferð sem skilar besta slembiskógalíkaninu er Yeo-Johnson umbreyting án miðjunar og skölunar.</p>
+<pre class="r"><code>nidurstodur %&gt;% 
+  filter(value == max(value))</code></pre>
+<pre><code>## # A tibble: 1 x 4
+##   pre_process model metric   value
+##   &lt;fct&gt;       &lt;chr&gt; &lt;chr&gt;    &lt;dbl&gt;
+## 1 yj          rf    Accuracy 0.799</code></pre>
+<p>Nákvæmni slembiskógalíkansins með Yeo-Johnson umbreytingu er 79.9% á þjálfunargögnunum. Það eru <em>séð</em> gögn.</p>
+<pre class="r"><code>models_yj$rf</code></pre>
+<pre><code>## Random Forest 
+## 
+## 185 samples
+##   9 predictor
+##   6 classes: &#39;One&#39;, &#39;Two&#39;, &#39;Three&#39;, &#39;Five&#39;, &#39;Six&#39;, &#39;Seven&#39; 
+## 
+## No pre-processing
+## Resampling: Cross-Validated (10 fold, repeated 3 times) 
+## Summary of sample sizes: 168, 168, 167, 168, 166, 166, ... 
+## Resampling results across tuning parameters:
+## 
+##   mtry  Accuracy   Kappa    
+##   2     0.7990341  0.7234367
+##   5     0.7684922  0.6854291
+##   9     0.7491762  0.6602136
+## 
+## Accuracy was used to select the optimal model using the largest value.
+## The final value used for the model was mtry = 2.</code></pre>
+<p>Við sjáum að bakvið tjöldin valdi <code>caret</code> gildið 2 fyrir stillibreytuna<a href="#fn13" class="footnote-ref" id="fnref13"><sup>13</sup></a> <code>mtry</code>, sem stjórnar fjölda þeirra breyta sem eru mögulegar í slembivali sem kandidatar fyrir “splitt” í ákvarðanatrjánum sem liggja að baki slembiskógalíkaninu. Við sjáum einnig að <code>caret</code> hefur skoðað þrjú möguleg gildi fyrir <code>mtry</code>.</p>
+<div id="framhaldi" class="section level3">
+<h3>Framhaldið</h3>
+<p>Við erum búin að komast að því að slembiskógur hentar vel fyrir þessi gögn, og þessi æfing gefur til kynna að það sé best að beita <em>bara</em> miðjun og skölun á gögnin. Í raun er þó ótrúlega lítill munur á nákvæmninni milli forvinnsluaðgerða, þannig það er strangt til tekið ekkert útséð í þeim málum.</p>
+<p>Ef þetta væri raunverulegt verkefni myndum við nú halda áfram og einblína á slembiskógalíkön, en gefa <code>caret</code> leiðbeiningar um að skoða fleiri gildi fyrir stillibreytuna <code>mtry</code> og sjá hvort það geti ekki haft þónokkur áhrif.</p>
+<p>Þegar við værum orðin sátt við nákvæmnina á <em>séðum</em> gögnum út frá tiltekinni nálgun myndum við því næst reikna nákvæmni og Kappa fyrir <em>óséð</em> gögn. Það eru gögn sem voru ekki notuð til að þjálfa líkanið. Til þess erum við með prófunarsett. Við myndum mæla nákvæmni og Kappa á prófunarsettinu og niðurstaðan úr því væri sú nákvæmni sem við gætum búist við af líkaninu.</p>
+</div>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>(e. supervised machine learning)<a href="#fnref1" class="footnote-back">↩</a></p></li>
+<li id="fn2"><p>(e. regression problem)<a href="#fnref2" class="footnote-back">↩</a></p></li>
+<li id="fn3"><p>(e. classification problem)<a href="#fnref3" class="footnote-back">↩</a></p></li>
+<li id="fn4"><p>(e. pre-processing)<a href="#fnref4" class="footnote-back">↩</a></p></li>
+<li id="fn5"><p>(lesist: ég sjúklega latur og þetta er bara sýnidæmi)<a href="#fnref5" class="footnote-back">↩</a></p></li>
+<li id="fn6"><p>(e. centering and scaling)<a href="#fnref6" class="footnote-back">↩</a></p></li>
+<li id="fn7"><p>(e. nearest neighbour)<a href="#fnref7" class="footnote-back">↩</a></p></li>
+<li id="fn8"><p>(e. random forest)<a href="#fnref8" class="footnote-back">↩</a></p></li>
+<li id="fn9"><p>(e. decision tree)<a href="#fnref9" class="footnote-back">↩</a></p></li>
+<li id="fn10"><p>(e. support vector machines using a radial decision boundary)<a href="#fnref10" class="footnote-back">↩</a></p></li>
+<li id="fn11"><p>(e. cross-validation)<a href="#fnref11" class="footnote-back">↩</a></p></li>
+<li id="fn12"><p>(e. accuracy)<a href="#fnref12" class="footnote-back">↩</a></p></li>
+<li id="fn13"><p>(e. tuning parameter)<a href="#fnref13" class="footnote-back">↩</a></p></li>
+</ol>
+</div>

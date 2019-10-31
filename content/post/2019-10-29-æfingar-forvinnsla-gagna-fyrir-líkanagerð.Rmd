@@ -1,0 +1,389 @@
+---
+title: 'Vandamál í vélnámi: Flokkum gler!'
+subtitle: 'Forvinnsla gagna fyrir líkanagerð'
+author: Hlynur Hallgrímsson
+date: '2019-10-29'
+slug: æfingar-forvinnsla-gagna-fyrir-líkanagerð
+categories:
+  - R
+  - Æfingar
+tags:
+  - R
+  - Vélnám
+image:
+  caption: ''
+  focal_point: ''
+editor_options: 
+  chunk_output_type: console
+---
+
+Vélnámi með viðgjafaraðferð^[(e. supervised machine learning)] má skipta í tvær tegundir vandamála. Annars vegar aðhvarfsvandamál^[(e. regression problem)], og hins vegar flokkunarvandamál^[(e. classification problem)].  Í þessari færslu ætla ég að vinna mig í gegnum flokkunarvandamál, þar sem áherslan verður á að skoða forvinnsluaðgerðir^[(e. pre-processing)].  Æfingin er fengin úr þriðja kafla bókarinnar [Applied Predictive Modeling](http://appliedpredictivemodeling.com/) eftir Max Kuhn og Kjell Johnson. Nánar tiltekið er þetta verkefni **3.1**.
+
+### Flokkum gler
+
+Í þessu fyrsta vandamáli okkar í vélnámi notumst við við gagnasett úr [The UC Irvine Machine Learning Repository](https://archive.ics.uci.edu) sem snýr að greiningu mismunandi tegunda glers út frá ljósbrotsstuðli og samspili 8 mismunandi frumefna: **Na, Mg Al, Si, K, Ca, Ba** og **Fe**. Ljósbrotsstuðullinn og frumefnin eru skýribreyturnar og svarbreytan er tegund glersins. Sumsé, við viljum geta búið til líkan þannig að ef við höfum mælingar fyrir frumefnin og ljósbrotsstuðulinn getum við spáð fyrir um hvaða flokki þetta gler tilheyrir. Helst með þokkalegri nákvæmni. 
+
+Við nálgumst gögnin í `mlbench` pakkann, en auk hans hlöðum við inn öðrum pökkum sem við munum nota við úrvinnslu verkefnisins. 
+
+
+```{r 3_1_load_packages, message=FALSE, warning=FALSE, results = 'hide'}
+library(mlbench)
+library(AppliedPredictiveModeling)
+library(tidyverse)
+library(tidymodels)
+library(corrplot)
+library(caret)
+library(caretEnsemble)
+library(viridis)
+library(doParallel)
+library(janitor)
+```
+
+Nú þegar við höfum hlaðið inn `mlbench` pakkanum getum við sótt `Glass` gögnin með `data()` aðgerðinni og skoðum strúktúr gagnanna með `str()` fallinu.
+  
+```{r 3_1_load_data}
+data(Glass)
+str(Glass)
+```
+
+Við sjáum að `Glass` er gagnarammi með 214 athugunum á 10 breytum. Þar af eru níu talnabreytur og ein flokkabreyta. Flokkabreytan er svarbreytan okkar, þ.e. tegundir glersins, og eru 6 mismunandi tegundir. 
+
+Nú skulum við vinda okkur í verkefnin.
+
+#### Leiðbeiningarnar eru eftirfarandi
+
+* a) Using vizualisations, explore the predictor variables to understand their distributions as well as the relationships between predictors
+* b) Do there appear to be any outliers in the data? Are any predictors skewed?
+* c) Are there any relevant transformations of one or more predictors that might improve the classification model?
+
+Eins og svo oft er ef til vill best hér að byrja með tíðniriti eða þéttniriti til að sjá dreifingu gilda innan hverrar skýribreytu. Við gerum eitt þéttnirit og eitt boxplott. 
+
+```{r 3_1_tidnirit}
+#Þéttnirit
+Glass %>%
+  gather(-Type, key = "efni", value = "gildi") %>%
+  ggplot(mapping = aes(x = gildi)) +
+    geom_density() +
+    facet_wrap(~efni, scales = "free")
+
+#Boxplott
+Glass %>%
+  gather(-Type, key = "efni", value = "gildi") %>%
+  ggplot(mapping = aes(x = efni, y = gildi)) +
+  geom_boxplot()
+
+```
+
+Við sjáum að þónokkur skekking er til staðar fyrir efnin **Ba, Ca, Fe** og ljósbrotsstuðulinn **RI**. Auk þess eru **K** og **Mg** tvítoppa. Þá virðist vera nokkuð afgerandi útlagi í **K**. 
+
+Því næst skoðum við fylgnirit milli skýribreytanna og notum til þess `corrplot` pakkann sem við höfum nú þegar hlaðið inn. Röðun breytanna á plottinu er fengin með `hclust` klösunarreikniriti. 
+
+```{r 3_1_fylgnirit}
+#Skilgreinum hvaða dálkar innihalda skýribreytur svo hægt sé að vísa til þeirra með nafni
+skyribreytur <- names(Glass)[1:9]
+
+#Til að laga corrplot er merkingum ása leyft að fara yfir spássíur með eftirfarandi breytingu
+par(xpd = TRUE)
+#Fylgniplott
+fylgni <- cor(Glass[, skyribreytur])
+corrplot(fylgni, method = "square", mar = c(1, 1, 1, 1), order = "hclust")
+```
+
+Við sjáum strax að það er eitthvað um fylgni milli skýribreyta. Sterkust er greinilega jákvæð fylgni milli ljósbrotsstuðulsins **RI** og svo **Ca** og þvínæst neikvæð fylgni milli ljósbrotsstuðulsins **RI** og **Si**. Marglínuleiki (fylgni milli skýribreytanna) getur valdið vandræðum í hinum ýmsu líkönum og þá skiptir ekki máli hvort fylgnin sé neikvæð eða jákvæð. Til frekari glöggvunar setjum við fram fylgnina á tvo aðra vegu, með hitakorti og súluriti. 
+
+
+```{r 3_1_fylgni_stoplarit, warning = FALSE}
+fylgni_df <- as_tibble(fylgni) %>% 
+  mutate(names = rownames(fylgni)) %>% 
+  gather(-names, key = "key", value = "Fylgni") %>% 
+  mutate(var_1 = pmin(names, key), # Setjum breytuna sem er á undan í stafrófinu í dálkinn var_1
+         var_2 = pmax(names, key)) %>% # og breytuna sem er á eftir í stafrófinu í dálkinn var_2
+  distinct(var_1, var_2, Fylgni) # og er hægt að ná í einstakar samsetningar með distinct
+
+#Hitakort
+fylgni_df %>%
+  mutate(Fylgni = if_else(var_1 == var_2, NA_real_, Fylgni)) %>%
+  ggplot(mapping = aes(x = var_1, y = var_2, fill = abs(Fylgni))) +
+  geom_tile() +
+  scale_fill_viridis()
+
+fylgni_df_utd <- fylgni_df %>% 
+  filter(var_1 != var_2) %>% # Fjarlægjum fylgni breytu við sjálfa sig 
+  arrange(Fylgni) %>% 
+  unite(var_1, var_2, sep = "/", col = "Efni")
+
+nota_palette <- c("#bbbbbb", "#F8766D", "#00BFC4")
+throskuldur <- 0.32
+
+#Súlurit
+fylgni_df_utd %>% 
+  mutate(Skipting = case_when(Fylgni > throskuldur ~ "Tiltölulega sterk jákvæð fylgni",
+                              Fylgni < -throskuldur ~ "Tiltölulega sterk neikvæð fylgni",
+                              TRUE ~ "Minni fylgni")) %>% 
+  ggplot(mapping = aes(x = as.numeric(rownames(.)), y = Fylgni, fill = Skipting)) +
+  geom_bar(stat = "identity") +
+  scale_x_continuous(breaks = NULL, labels = NULL, name = "Samsetningar") +
+  scale_fill_manual(values = nota_palette) +
+  geom_hline(yintercept = 0)
+
+#Súlurit frh.
+fylgni_df_utd %>% 
+  filter(abs(Fylgni) > 0.32) %>% # Fjarlægjum fylgni sem er ekki meiri en +- 0.32
+  mutate(Formerki = if_else(Fylgni >= 0, "Jákvætt", "Neikvætt")) %>% 
+  ggplot(mapping = aes(x = as.numeric(rownames(.)), y = Fylgni, fill = Formerki)) +
+  geom_bar(stat = "identity") +
+  geom_text(mapping = aes(label = Efni, vjust = if_else(Fylgni > 0, -0.9, 1.6))) +
+  scale_x_continuous(breaks = NULL, labels = NULL, name = "Samsetningar") +
+  geom_hline(yintercept = 0) +
+  coord_cartesian(ylim = c(-0.6, 0.9))
+```
+
+Þá sjáum við að ef að við notum ljósbrotsstuðul **RI** sem skýribreytu fyrir tegund glersins, þá er efnið **Ca** að fara að veita okkur minnstar viðbótarupplýsingar, og öfugt. Eins og ég nefndi hér að ofan getur marglínuleiki valdið okkur vandræðum. Þannig væri líklega okkar fyrsta verk að fjarlægja ljósbrotsstuðulinn **RI**, þar sem sterk fylgni er milli hans og efnisins **Ca**, og jafnframt tiltölulega sterk neikvæð fylgni milli hans og efnisins **Si**.  Það væri þá til að koma í veg fyrir marglínuleika fyrir þau líkön sem slíkt hefur áhrif á, en ef til vill væri það líka eftirsóknarvert til einföldunar þó að við værum með til dæmis slembiskógalíkan, sem marglínuleiki hefur ekki áhrif á. Það að fækka skýribreytum einfaldar líkanið og styttir reiknitíma. Að því sögðu þá er fókusinn í þessu dæmi á forvinnsluaðgerðir til að leiðrétta fyrir skekkingu í dreifingu^[(lesist: ég sjúklega latur og þetta er bara sýnidæmi)] - þannig við látum það ógert að henda út ljósbrotsstuðlinum að svo stöddu.
+
+## Forvinnsluaðgerðir
+### Til að leiðrétta fyrir skekkingu í dreifingu
+
+Til að leiðrétta fyrir skekkingu í dreifingu skýribreytanna væri ákjósanlegt að geta beitt fyrir sig Box-Cox umbreytingu. Til þess þurfa öll gildi að vera stærri en núll. Því þurfum við að athuga hvort einhver núllgildi eða neikvæð gildi leynist í einhverjum skýribreytanna. Til þess að auðvelda okkur það erum við sniðug og notumst við `map_dbl()` fallið úr `purrr` pakkanum. Við höfum þegar hlaðið inn `purrr` hér að ofan um leið og við hlóðum inn `tidyverse` pakkasamstæðunni. 
+
+```{r 3_1_null_e_neikvaett}
+Glass[, skyribreytur] %>% 
+  map_dbl(~sum(. <= 0))
+```
+
+Einungis **RI, Na, Al, Si** og **Ca** innihalda bara jákvæð gildi, en hin ekki. Við sjáum því strax að Box-Cox umbreyting er ekki valkostur fyrir allar skýribreyturnar, né þá heldur log-umbreyting. Þá prófum við Yeo-Johnson umbreytingu, en hún er ekki alls ósvipuð Box-Cox nema fyrir það að gildi mega vera neikvæð eða núll. Raunar er Yeo-Johnson umbreytingin í reynd Box-Cox umbreyting í þeim tilfellum þar sem öll gildi breytu eru jákvæð. Til þess að kalla fram Yeo-Johnson umbreytingu getum við notað `preProcess()` fallið úr `caret` pakkanum, sem skrifaður er af Max Kuhn, öðrum höfundi *Applied Predictive Modeling* sem verkefnið er úr.
+
+Við ætlum einnig að prófa að miðja og skala gögnin.
+
+```{r 3_1_yj}
+pp_object_Glass_both <- preProcess(Glass, method = c("center", "scale", "YeoJohnson"))
+
+glass_both <- predict(pp_object_Glass_both, Glass)
+
+pp_object_Glass_yj <- preProcess(Glass, method = c("YeoJohnson"))
+
+glass_yj <- predict(pp_object_Glass_yj, Glass)
+
+pp_object_Glass_cs <- preProcess(Glass, method = c("center", "scale"))
+
+glass_cs <- predict(pp_object_Glass_cs, Glass)
+```
+
+Prófum sambærilegt þéttnirit og áður. Berum saman tvær mismunandi uppskriftir að forvinnslu. Annars vegar miðjun og skölun, og hins vegar miðjun, skölun og Yeo-Johnson umbreytingu. Hér er búið að kommenta út þrjú önnur þéttnirit, svo þau birtist ekki.
+
+```{r}
+# glass_both %>% 
+#   gather(-Type, key = "efni", value = "gildi") %>%
+#   ggplot(mapping = aes(x = gildi)) +
+#     geom_density() +
+#     facet_wrap(~efni, scales = "free")
+# 
+# 
+# glass_yj %>% 
+#   gather(-Type, key = "efni", value = "gildi") %>%
+#   ggplot(mapping = aes(x = gildi)) +
+#     geom_density() +
+#     facet_wrap(~efni, scales = "free")
+# 
+# glass_cs %>% 
+#   gather(-Type, key = "efni", value = "gildi") %>%
+#   ggplot(mapping = aes(x = gildi)) +
+#     geom_density() +
+#     facet_wrap(~efni, scales = "free")
+
+glass_both_tidy <- glass_both %>% 
+  gather(-Type, key = "efni", value = "gildi")
+
+glass_cs_tidy <- glass_cs %>% 
+    gather(-Type, key = "efni", value = "gildi")
+
+glass_saman <- bind_rows("Fyrir" = glass_cs_tidy, "Eftir" = glass_both_tidy, .id = "Y-J umbreyting")
+
+glass_saman %>% 
+  ggplot(mapping = aes(x = gildi, color = `Y-J umbreyting`, fill = `Y-J umbreyting`)) +
+    geom_density(alpha = 0.2) +
+    facet_wrap(~efni, scales = "free")
+
+```
+
+## Eru forvinnsluaðgerðirnar líklegar til að bæta spár um flokkun glersins?
+
+Til þess að svara því liggur beinast við að forvinna gögnin eftir mismunandi uppskriftum og spá því næst fyrir um tegundir glers út frá skýribreytunum. Við búum til þjálfunarsett og prófunarsett til að vinna með. `training_set_raw` og `test_set_raw` eru grunngögnin án nokkurar forvinnslu. Í `training_set_cs` og `test_set_cs` eru gögnin miðjuð og sköluð^[(e. centering and scaling)]. Í `training_set_yj` og `test_set_yj`er notast er við Yeo-Johnson umbreytingu. Í `training_set_both` og `test_set_both` er notast við miðjun og skölun, og Yeo-Johnson umbreytingu. 
+
+Við tökum 85% af gögnunum og notum þau sem þjálfunarsett og restin verður prófunarsett. 
+
+```{r splitting, cache = TRUE}
+train_ind <- caret::createDataPartition(y = glass_cs$Type, p = 0.85, list = FALSE)
+pred_vars <- 1:9 # Dálkanúmer skýribreytanna
+
+training_set_raw  <- Glass[train_ind, ]
+training_set_both <- glass_both[train_ind, ]
+training_set_cs   <- glass_cs[train_ind, ]
+training_set_yj   <- glass_yj[train_ind, ]
+
+test_set_raw      <- Glass[-train_ind, ]
+test_set_both     <- glass_both[-train_ind, ]
+test_set_cs       <- glass_cs[-train_ind, ]
+test_set_yj       <- glass_yj[-train_ind, ]
+
+```
+
+Þegar við höfum skilgreint þjálfunarsett og prófunarsett hefjumst við handa við að þjálfa líkanið á hráu, óunnu gögnunum. Við notumst við `caret` pakkann, en hann er samansafn tóla til spálíkanagerðar. Við notumst einnig við `caretEnsemble` pakkann, sem er allajafna notaður til að búa til samleik spálíkana. Með samleik er átt við það að búa til eitt líkan úr mörgum líkönum til að bæta spánákvæmni. Hér ætlum við hinsvegar einungis að nota hann til að halda utan um mismunandi reiknirit sem við ætlum að beita á gögnin. `knn` er næsta-nágranna reiknirit^[(e. nearest neighbour)], `treebag` er *bagged trees* reiknirit, `rf` er slembiskógur^[(e. random forest)], `rpart` er einfalt ákvarðanatré^[(e. decision tree)], `svmRadial` er stuðningsvigra reiknirit með kúlulaga ákvörðunarskilum^[(e. support vector machines using a radial decision boundary)]. `xgbTree` kallar til `xgboost` reikniritið sem framkvæmir ofurmögnun stiguls^[(e. extreme gradient boosting)]. 
+
+Við notumst við 3 sinnum 10 brota kross prófun^[(e. cross-validation)] í öllum tilvikum til að reyna að tryggja að við séum ekki að ofsníða^[(e. over-fit)] að þjálfunargögnunum.
+
+```{r styring, cache = TRUE}
+styring_reiknirita <- trainControl(method="repeatedcv", number=10, repeats=3, index = createMultiFolds(training_set_raw$Type, k = 10, times = 3),
+                                   savePredictions="final", classProbs=TRUE)
+
+listi_reiknirita <- c('knn', 'treebag', 'rf', 'rpart', 'svmRadial', 'xgbTree') 
+```
+
+Hér nota ég 7 kjarna til að skipta útreikningunum niður á. Ef þú hyggst keyra þessa útreikninga á eigin vélbúnaði þarf að taka mið af fjölda kjarna í örgjörva vélbúnaðarins sem útreikningarnir fara fram á. 
+
+```{r training_raw, cache = TRUE, dependson = "styring"}
+training_set_raw$Type <- as.factor(training_set_raw$Type)
+levels(training_set_raw$Type) <- c("One", "Two", "Three", "Five", "Six", "Seven")
+
+cl <- makeCluster(7)
+registerDoParallel(cl)
+
+models_raw <- caretList(Type ~ ., data = training_set_raw, 
+                        trControl = styring_reiknirita, 
+                        methodList = listi_reiknirita)
+results_raw <- resamples(models_raw)
+
+stopCluster(cl)
+```
+
+Því næst gerum við hið nákvæmlega sama fyrir gagnasettið sem hefur verið skalað og miðjað. 
+
+```{r training_cs, cache = TRUE, dependson = "styring"}
+training_set_cs$Type <- as.factor(training_set_cs$Type)
+levels(training_set_cs$Type) <- c("One", "Two", "Three", "Five", "Six", "Seven")
+
+cl <- makeCluster(7)
+registerDoParallel(cl)
+
+models_cs <- caretList(Type~., data=training_set_cs,
+                       trControl = styring_reiknirita,
+                       methodList = listi_reiknirita)
+
+results_cs <- resamples(models_cs)
+
+stopCluster(cl)
+```
+
+Og því næst gagnasettið með Yeo-Johnson umbreytingu.
+
+```{r training_yj, cache = TRUE, dependson = "styring"}
+training_set_yj$Type <- as.factor(training_set_yj$Type)
+levels(training_set_yj$Type) <- c("One", "Two", "Three", "Five", "Six", "Seven")
+
+cl <- makeCluster(7)
+registerDoParallel(cl)
+
+models_yj <- caretList(Type~., data=training_set_yj,
+                       trControl = styring_reiknirita,
+                       methodList = listi_reiknirita)
+
+results_yj <- resamples(models_yj)
+
+stopCluster(cl)
+```
+
+Og svo fyrir gögnin með miðjun og skölun, og Yeo-Johnson umbreytingu. 
+
+```{r training_both, cache = TRUE, dependson = "styring"}
+training_set_both$Type <- as.factor(training_set_both$Type)
+levels(training_set_both$Type) <- c("One", "Two", "Three", "Five", "Six", "Seven")
+
+cl <- makeCluster(7)
+registerDoParallel(cl)
+
+models_both <- caretList(Type~., data=training_set_both,
+                         trControl = styring_reiknirita,
+                         methodList = listi_reiknirita)
+
+results_both <- resamples(models_both)
+
+stopCluster(cl)
+```
+
+
+Þegar við höfum þjálfað áðurnefnd líkön á gögnum með mismunandi 'forvinnslu-uppskriftum' skoðum við áhrif forvinnslu á spánákvæmni. Í stað þess að nota bara nákæmni^[(e. accuracy)] (hlutfall þeirra athugana sem líkan flokkar rétt) heldur skoðum við einnig Cohen's Kappa, sem er mælikvarði á nákvæmni líkansins umfram vænta nákvæmni. Þá er átt við að í tilvikum þar sem eru einungis tveir flokkar má vænta að slembiflokkari myndi flokka athugun í réttan flokk í helmingi tilvika. 
+
+Cohen's kappa er reiknað á eftirfarandi hátt.
+
+$$ Kappa = \frac{Nákvæmni_{reiknuð} - Nákvæmni_{vænt}}{1 - Nákvæmni_{vænt}} $$
+
+
+```{r}
+nidurstodur <- list("hrátt" = results_raw$values,
+     "cs" = results_cs$values,
+     "yj" = results_yj$values,
+     "bæði" = results_both$values) %>% 
+  map(~as_tibble(.)) %>%
+  map(~set_names(., ~str_replace(., "~", "_"))) %>% 
+  bind_rows(.id = "pre_process") %>% 
+  group_by(pre_process) %>% 
+  summarize_at(.vars = vars(-1),
+               .funs = mean) %>% 
+  pivot_longer(-pre_process, names_to = "model_metric", values_to = "value") %>%
+  arrange(model_metric, pre_process) %>% 
+  separate(col = model_metric, into = c("model", "metric"), sep = "_") %>% 
+  mutate(pre_process = fct_relevel(pre_process, "hrátt", "cs", "yj", "bæði"))
+
+nidurstodur %>% 
+  filter(metric == "Kappa") %>% 
+  ggplot(aes(x = pre_process, y = value, fill = pre_process)) +
+  geom_col() +
+  facet_wrap(~model) +
+  labs(title = "Cohen's Kappa eftir forvinnsluaðferð")
+
+
+nidurstodur %>% 
+  filter(metric == "Accuracy") %>% 
+  ggplot(aes(x = pre_process, y = value, fill = pre_process)) +
+  geom_col() +
+  facet_wrap(~model) +
+  labs(title = "Nákvæmni eftir forvinnsluaðferð")
+
+nidurstodur %>% 
+  filter(metric == "Accuracy") %>% 
+  group_by(model) %>% 
+  mutate(centered = value - mean(value)) %>% 
+  ggplot(aes(x = pre_process, y = centered, fill = pre_process)) +
+  geom_hline(yintercept = 0) +
+  geom_col() +
+  facet_wrap(~model) +
+  labs(title = "Frávik frá meðalnákvæmni hvers reiknirits")
+
+
+
+
+```
+
+Þannig sjáum við að slembiskógareikniritið `rf` skilar besta líkaninu fyrir okkur. Við sjáum jafnframt að sú forvinnsluaðferð sem skilar besta slembiskógalíkaninu er Yeo-Johnson umbreyting án miðjunar og skölunar. 
+
+```{r}
+nidurstodur %>% 
+  filter(value == max(value))
+```
+
+Nákvæmni slembiskógalíkansins með Yeo-Johnson umbreytingu er `r nidurstodur %>% filter(value == max(value)) %>% pull(value) %>% scales::percent()` á þjálfunargögnunum. Það eru *séð* gögn.
+
+```{r}
+models_yj$rf
+```
+
+Við sjáum að bakvið tjöldin valdi `caret` gildið 2 fyrir stillibreytuna^[(e. tuning parameter)] `mtry`, sem stjórnar fjölda þeirra breyta sem eru mögulegar í slembivali sem kandidatar fyrir "splitt" í ákvarðanatrjánum sem liggja að baki slembiskógalíkaninu. Við sjáum einnig að `caret` hefur skoðað þrjú möguleg gildi fyrir `mtry`. 
+
+### Framhaldið
+
+Við erum búin að komast að því að slembiskógur hentar vel fyrir þessi gögn, og þessi æfing gefur til kynna að það sé best að beita *bara* Yeo-Johnson umbreytingu á gögnin. Í raun er þó ótrúlega lítill munur á nákvæmninni milli forvinnsluaðgerða, þannig það er strangt til tekið ekkert útséð í þeim málum.
+
+Ef þetta væri raunverulegt verkefni myndum við nú halda áfram og einblína á þau líkön sem koma best út. Til dæmis að einblína á slembiskógalíkön, en gefa `caret` leiðbeiningar um að skoða fleiri gildi fyrir stillibreytuna `mtry` og sjá hvort það geti ekki haft þónokkur áhrif.
+
+Þegar við værum orðin sátt við nákvæmnina á *séðum* gögnum út frá tiltekinni nálgun myndum við því næst reikna nákvæmni og Kappa fyrir *óséð* gögn. Það eru gögn sem voru ekki notuð til að þjálfa líkanið. Til þess erum við með prófunarsett. Við myndum mæla nákvæmni og Kappa á prófunarsettinu og niðurstaðan úr því væri sú nákvæmni sem við gætum búist við af líkaninu. 
+
+Skemmtilegt, ekki satt?
