@@ -386,4 +386,6 @@ Ef þetta væri raunverulegt verkefni myndum við nú halda áfram og einblína 
 
 Þegar við værum orðin sátt við nákvæmnina á *séðum* gögnum út frá tiltekinni nálgun myndum við því næst reikna nákvæmni og Kappa fyrir *óséð* gögn. Það eru gögn sem voru ekki notuð til að þjálfa líkanið. Til þess erum við með prófunarsett. Við myndum mæla nákvæmni og Kappa á prófunarsettinu og niðurstaðan úr því væri sú nákvæmni sem við gætum búist við af líkaninu. 
 
-Skemmtilegt, ekki satt?
+Að lokum er vert að koma eftirfarandi fyrirvara að: Í þessu vandamáli hefur nálgunin alfarið verið reiknidrifin^[(e. empirically driven modeling)] og að engu leyti reynsludrifin^[(e. experience-driven modeling)]. Ég hef enga sérfræðiþekkingu eða reynslu sem snýr að flokkun mismunandi gerða glers sem hefði getað nýst mér í þessu verkefni. Í raunveruleikanum þarf maður að prjóna saman sérfræðiþekkingu við tölfræðilega útreikninga til þess að ná sem bestum árangri. En það er efni í annað blogg.
+
+Takk í dag!
