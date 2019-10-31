@@ -192,10 +192,9 @@ glass_saman %&gt;%
     facet_wrap(~efni, scales = &quot;free&quot;)</code></pre>
 <p><img src="/post/2019-10-29-æfingar-forvinnsla-gagna-fyrir-líkanagerð_files/figure-html/unnamed-chunk-1-1.png" width="672" /></p>
 </div>
-</div>
-<div id="eru-einhverjar-forvinnsluagerir-liklegar-til-a-bta-spar-um-flokkun-glersins" class="section level1">
-<h1>Eru einhverjar forvinnsluaðgerðir líklegar til að bæta spár um flokkun glersins?</h1>
-<p>Til þess að svara því liggur beinast við að forvinna gögnin eftir mismunandi uppskriftum og spá því næst fyrir um tegundir glers út frá skýribreytunum. Við búum til þjálfunarsett og prófunarsett til að vinna með. <code>training_set_raw</code> og <code>test_set_raw</code> eru grunngögnin án nokkurar forvinnslu. Í <code>training_set_cs</code> og <code>test_set_cs</code> eru gögnin miðjuð og sköluð<a href="#fn6" class="footnote-ref" id="fnref6"><sup>6</sup></a>. Í <code>training_set_yj</code> og <code>test_set_yj</code>er notast er við Yeo-Johnson umbreytingu. Í <code>training_set_both</code> og <code>test_set_both</code> er notast við miðjun og skölun, og Yeo-Johnson umbreytingu.</p>
+<div id="eru-forvinnsluagerirnar-liklegar-til-a-bta-spar-um-flokkun-glersins" class="section level3">
+<h3>Eru forvinnsluaðgerðirnar líklegar til að bæta spár um flokkun glersins?</h3>
+<p>Til þess að svara því liggur beinast við að forvinna gögnin eftir mismunandi uppskriftum og spá því næst fyrir um tegundir glers út frá skýribreytunum. Við búum til þjálfunarsett og prófunarsett til að vinna með. <code>training_set_raw</code> og <code>test_set_raw</code> eru grunngögnin án nokkurar forvinnslu. Í <code>training_set_cs</code> og <code>test_set_cs</code> eru gögnin miðjuð og sköluð<a href="#fn6" class="footnote-ref" id="fnref6"><sup>6</sup></a>. Í <code>training_set_yj</code> og <code>test_set_yj</code> er notast er við Yeo-Johnson umbreytingu. Í <code>training_set_both</code> og <code>test_set_both</code> er notast við miðjun og skölun, og Yeo-Johnson umbreytingu.</p>
 <p>Við tökum 85% af gögnunum og notum þau sem þjálfunarsett og restin verður prófunarsett.</p>
 <pre class="r"><code>train_ind &lt;- caret::createDataPartition(y = glass_cs$Type, p = 0.85, list = FALSE)
 pred_vars &lt;- 1:9 # Dálkanúmer skýribreytanna
@@ -209,13 +208,13 @@ test_set_raw      &lt;- Glass[-train_ind, ]
 test_set_both     &lt;- glass_both[-train_ind, ]
 test_set_cs       &lt;- glass_cs[-train_ind, ]
 test_set_yj       &lt;- glass_yj[-train_ind, ]</code></pre>
-<p>Þegar við höfum skilgreint þjálfunarsett og prófunarsett hefjumst við handa við að þjálfa líkanið á hráu, óunnu gögnunum. Við notumst við <code>caret</code> pakkann, en hann er samansafn tóla til spálíkanagerðar. Við notumst einnig við <code>caretEnsemble</code> pakkann, sem er allajafna notaður til að búa til samleik spálíkana. Með samleik er átt við það að búa til eitt líkan úr mörgum líkönum til að bæta spánákvæmni. Hér ætlum við hinsvegar einungis að nota hann til að halda utan um mismunandi reiknirit sem við ætlum að beita á gögnin. <code>knn</code> er næsta-nágranna reiknirit<a href="#fn7" class="footnote-ref" id="fnref7"><sup>7</sup></a>, <code>treebag</code> er <em>bagged trees</em> reiknirit, <code>rf</code> er slembiskógur<a href="#fn8" class="footnote-ref" id="fnref8"><sup>8</sup></a>, <code>rpart</code> er einfalt ákvarðanatré<a href="#fn9" class="footnote-ref" id="fnref9"><sup>9</sup></a>, <code>svmRadial</code> er stuðningsvigra reiknirit með kúlulaga ákvörðunarskilum<a href="#fn10" class="footnote-ref" id="fnref10"><sup>10</sup></a>. <code>xgbTree</code> kallar til <code>xgboost</code> reikniritið sem framkvæmir ofurmögnun stiguls.</p>
-<p>Við notumst við 3 sinnum 10 brota kross prófun<a href="#fn11" class="footnote-ref" id="fnref11"><sup>11</sup></a> í öllum tilvikum.</p>
+<p>Þegar við höfum skilgreint þjálfunarsett og prófunarsett hefjumst við handa við að þjálfa líkanið á hráu, óunnu gögnunum. Við notumst við <code>caret</code> pakkann, en hann er samansafn tóla til spálíkanagerðar. Við notumst einnig við <code>caretEnsemble</code> pakkann, sem er allajafna notaður til að búa til samleik spálíkana. Með samleik er átt við það að búa til eitt líkan úr mörgum líkönum til að bæta spánákvæmni. Hér ætlum við hinsvegar einungis að nota hann til að halda utan um mismunandi reiknirit sem við ætlum að beita á gögnin. <code>knn</code> er næsta-nágranna reiknirit<a href="#fn7" class="footnote-ref" id="fnref7"><sup>7</sup></a>, <code>treebag</code> er <em>bagged trees</em> reiknirit, <code>rf</code> er slembiskógur<a href="#fn8" class="footnote-ref" id="fnref8"><sup>8</sup></a>, <code>rpart</code> er einfalt ákvarðanatré<a href="#fn9" class="footnote-ref" id="fnref9"><sup>9</sup></a>, <code>svmRadial</code> er stuðningsvigra reiknirit með kúlulaga ákvörðunarskilum<a href="#fn10" class="footnote-ref" id="fnref10"><sup>10</sup></a>. <code>xgbTree</code> aðferðin kallar til <code>xgboost</code> reikniritið sem framkvæmir ofurmögnun stiguls<a href="#fn11" class="footnote-ref" id="fnref11"><sup>11</sup></a>.</p>
+<p>Við notumst við 3 sinnum 10 brota kross prófun<a href="#fn12" class="footnote-ref" id="fnref12"><sup>12</sup></a> í öllum tilvikum til að reyna að tryggja að við séum ekki að ofsníða<a href="#fn13" class="footnote-ref" id="fnref13"><sup>13</sup></a> að þjálfunargögnunum.</p>
 <pre class="r"><code>styring_reiknirita &lt;- trainControl(method=&quot;repeatedcv&quot;, number=10, repeats=3, index = createMultiFolds(training_set_raw$Type, k = 10, times = 3),
                                    savePredictions=&quot;final&quot;, classProbs=TRUE)
 
 listi_reiknirita &lt;- c(&#39;knn&#39;, &#39;treebag&#39;, &#39;rf&#39;, &#39;rpart&#39;, &#39;svmRadial&#39;, &#39;xgbTree&#39;) </code></pre>
-<p>Hér nota ég 7 kjarna til að skipta útreikningunum niður á. Ef þú hyggst keyra þessa útreikninga á eigin vélbúnaði þarf að taka mið af fjölda kjarna í örgjörva vélbúnaðarins sem útreikningarnir fara fram á.</p>
+<p>Hér nota ég 7 kjarna til að skipta útreikningunum niður á. Ef þú hyggst keyra þessa útreikninga á eigin vélbúnaði þarf að taka mið af fjölda kjarna í örgjörva vélbúnaðarins sem útreikningarnir fara fram á. Að því sögðu er vert að nefna að formúluviðmótið hægir talsvert á útreikningum á <code>xgboost</code>, þannig í raun væri vond hugmynd að kópera þennan kóða beint. En hey, ég er búinn að þjálfa líkönin þegar þessi orð eru skrifuð, þannig það skiptir ekki öllu máli.</p>
 <pre class="r"><code>training_set_raw$Type &lt;- as.factor(training_set_raw$Type)
 levels(training_set_raw$Type) &lt;- c(&quot;One&quot;, &quot;Two&quot;, &quot;Three&quot;, &quot;Five&quot;, &quot;Six&quot;, &quot;Seven&quot;)
 
@@ -270,7 +269,7 @@ models_both &lt;- caretList(Type~., data=training_set_both,
 results_both &lt;- resamples(models_both)
 
 stopCluster(cl)</code></pre>
-<p>Þegar við höfum þjálfað áðurnefnd líkön á gögnum með mismunandi ‘forvinnslu-uppskriftum’ skoðum við áhrif forvinnslu á spánákvæmni. Í stað þess að nota bara nákæmni<a href="#fn12" class="footnote-ref" id="fnref12"><sup>12</sup></a> (hlutfall þeirra athugana sem líkan flokkar rétt) heldur skoðum við einnig Cohen’s Kappa, sem er mælikvarði á nákvæmni líkansins umfram vænta nákvæmni. Þá er átt við að í tilvikum þar sem eru einungis tveir flokkar má vænta að slembiflokkari myndi flokka athugun í réttan flokk í helmingi tilvika.</p>
+<p>Þegar við höfum þjálfað áðurnefnd líkön á gögnum með mismunandi ‘forvinnslu-uppskriftum’ skoðum við áhrif forvinnslu á spánákvæmni. Í stað þess að nota bara nákæmni<a href="#fn14" class="footnote-ref" id="fnref14"><sup>14</sup></a> (hlutfall þeirra athugana sem líkan flokkar rétt) heldur skoðum við einnig Cohen’s Kappa, sem er mælikvarði á nákvæmni líkansins umfram vænta nákvæmni. Þá er átt við að í tilvikum þar sem eru einungis tveir flokkar má vænta að slembiflokkari myndi flokka athugun í réttan flokk í helmingi tilvika.</p>
 <p>Cohen’s kappa er reiknað á eftirfarandi hátt.</p>
 <p><span class="math display">\[ Kappa = \frac{Nákvæmni_{reiknuð} - Nákvæmni_{vænt}}{1 - Nákvæmni_{vænt}} \]</span></p>
 <pre class="r"><code>nidurstodur &lt;- list(&quot;hrátt&quot; = results_raw$values,
@@ -339,12 +338,14 @@ nidurstodur %&gt;%
 ## 
 ## Accuracy was used to select the optimal model using the largest value.
 ## The final value used for the model was mtry = 2.</code></pre>
-<p>Við sjáum að bakvið tjöldin valdi <code>caret</code> gildið 2 fyrir stillibreytuna<a href="#fn13" class="footnote-ref" id="fnref13"><sup>13</sup></a> <code>mtry</code>, sem stjórnar fjölda þeirra breyta sem eru mögulegar í slembivali sem kandidatar fyrir “splitt” í ákvarðanatrjánum sem liggja að baki slembiskógalíkaninu. Við sjáum einnig að <code>caret</code> hefur skoðað þrjú möguleg gildi fyrir <code>mtry</code>.</p>
+<p>Við sjáum að bakvið tjöldin valdi <code>caret</code> gildið 2 fyrir stillibreytuna<a href="#fn15" class="footnote-ref" id="fnref15"><sup>15</sup></a> <code>mtry</code>, sem stjórnar fjölda þeirra breyta sem eru mögulegar í slembivali sem kandidatar fyrir “splitt” í ákvarðanatrjánum sem liggja að baki slembiskógalíkaninu. Við sjáum einnig að <code>caret</code> hefur skoðað þrjú möguleg gildi fyrir <code>mtry</code>.</p>
+</div>
 <div id="framhaldi" class="section level3">
 <h3>Framhaldið</h3>
-<p>Við erum búin að komast að því að slembiskógur hentar vel fyrir þessi gögn, og þessi æfing gefur til kynna að það sé best að beita <em>bara</em> miðjun og skölun á gögnin. Í raun er þó ótrúlega lítill munur á nákvæmninni milli forvinnsluaðgerða, þannig það er strangt til tekið ekkert útséð í þeim málum.</p>
-<p>Ef þetta væri raunverulegt verkefni myndum við nú halda áfram og einblína á slembiskógalíkön, en gefa <code>caret</code> leiðbeiningar um að skoða fleiri gildi fyrir stillibreytuna <code>mtry</code> og sjá hvort það geti ekki haft þónokkur áhrif.</p>
+<p>Við erum búin að komast að því að slembiskógur hentar vel fyrir þessi gögn, og þessi æfing gefur til kynna að það sé best að beita <em>bara</em> Yeo-Johnson umbreytingu á gögnin. Í raun er þó ótrúlega lítill munur á nákvæmninni milli forvinnsluaðgerða, þannig það er strangt til tekið ekkert útséð í þeim málum.</p>
+<p>Ef þetta væri raunverulegt verkefni myndum við nú halda áfram og einblína á þau líkön sem koma best út. Til dæmis að einblína á slembiskógalíkön, en gefa <code>caret</code> leiðbeiningar um að skoða fleiri gildi fyrir stillibreytuna <code>mtry</code> og sjá hvort það geti ekki haft þónokkur áhrif.</p>
 <p>Þegar við værum orðin sátt við nákvæmnina á <em>séðum</em> gögnum út frá tiltekinni nálgun myndum við því næst reikna nákvæmni og Kappa fyrir <em>óséð</em> gögn. Það eru gögn sem voru ekki notuð til að þjálfa líkanið. Til þess erum við með prófunarsett. Við myndum mæla nákvæmni og Kappa á prófunarsettinu og niðurstaðan úr því væri sú nákvæmni sem við gætum búist við af líkaninu.</p>
+<p>Skemmtilegt, ekki satt?</p>
 </div>
 </div>
 <div class="footnotes">
@@ -360,8 +361,10 @@ nidurstodur %&gt;%
 <li id="fn8"><p>(e. random forest)<a href="#fnref8" class="footnote-back">↩</a></p></li>
 <li id="fn9"><p>(e. decision tree)<a href="#fnref9" class="footnote-back">↩</a></p></li>
 <li id="fn10"><p>(e. support vector machines using a radial decision boundary)<a href="#fnref10" class="footnote-back">↩</a></p></li>
-<li id="fn11"><p>(e. cross-validation)<a href="#fnref11" class="footnote-back">↩</a></p></li>
-<li id="fn12"><p>(e. accuracy)<a href="#fnref12" class="footnote-back">↩</a></p></li>
-<li id="fn13"><p>(e. tuning parameter)<a href="#fnref13" class="footnote-back">↩</a></p></li>
+<li id="fn11"><p>(e. extreme gradient boosting)<a href="#fnref11" class="footnote-back">↩</a></p></li>
+<li id="fn12"><p>(e. cross-validation)<a href="#fnref12" class="footnote-back">↩</a></p></li>
+<li id="fn13"><p>(e. over-fit)<a href="#fnref13" class="footnote-back">↩</a></p></li>
+<li id="fn14"><p>(e. accuracy)<a href="#fnref14" class="footnote-back">↩</a></p></li>
+<li id="fn15"><p>(e. tuning parameter)<a href="#fnref15" class="footnote-back">↩</a></p></li>
 </ol>
 </div>
