@@ -27,15 +27,15 @@ subtitle = "Hitt og þetta"
   # 
   # [[content.filter_button]]
   #   name = "Vélnám"
-  #   tag = "Machine Learning"  
+  #   tag = "machine_learning"  
   # 
   # [[content.filter_button]]
   #   name = "Shiny"
-  #   tag = "Shiny"
+  #   tag = "shiny"
   # 
   # [[content.filter_button]]
   #   name = "Annað"
-  #   tag = "Other"
+  #   tag = "other"
 
 [design]
   # Choose how many columns the section has. Valid values: 1 or 2.
