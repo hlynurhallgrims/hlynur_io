@@ -1,0 +1,55 @@
+---
+title: Samantekt ársins 2019
+author: Hlynur Hallgrímsson
+date: '2019-12-31'
+slug: samantekt-arsins-2019
+categories:
+  - Almennt
+tags:
+  - Almennt
+image:
+  caption: ''
+  focal_point: ''
+---
+
+Í ljósi þess að fólk er að taka saman árið þá langar mig að vera memm. Ætla að reyna að halda þessu stuttu og skemmtilegu.
+
+### Besta bók sem ég las á árinu*
+
+\*ég er enn að lesa hana. [**Feature Engineering and Selection**](http://feat.engineering) eftir Max Kuhn og Kjell Johnson. Besta bók um spálíkön og vélnám síðan [Applied Predictive Modeling](http://appliedpredictivemodeling.com/), eftir sömu höfunda, kom út. Í stuttu máli, hvernig getur þú umbylt gögnum á hátt sem gagnast sem best til notkunar í spálíkönum? 
+
+### Ok, þá. Besta bókin sem var ekki kennslubók
+
+Í öllu tali um fjórðu iðnbyltinguna, mátt vélnáms, gervigreindar og sjálfvirknivæðingar er **Weapons of Math Destruction** eftir Cathy O'Neil ***algjör og ófrávíkjanleg skyldulesning*** hjá öllum þeim sem vinna með gögn, eða taka mikilvægar ákvarðanir út frá gögnum sem aðrir hafa unnið. Í stuttu máli, reikniritavæðing nútímasamfélagsins getur þýtt kerfisvæðingu óréttlætis ef við stöndum okkur ekki í stykkinu. Við getum eyðilagt einstaklinga og samfélög ef við nálgumst viðfangsefnið ekki af aga og alvarleika.
+
+## Hvað gerði ég á árinu? 
+
+* **Ég vann voða, voða mikið af líkanavinnu fyrir tekjuskattsbreytingarnar sem gengu í garð Í DAG!** Ég var starfsmaður sérfræðihóps um endurskoðunina (og starfsmaður og nefndarmaður í tveimur öðrum starfshópum sem lögðu grundvöllinn að þessari vinnu) og fannst skemmtilegt að sjá þegar sérfræðihópurinn sagði í skýrslunni sem gefin var út að ég væri "frumkvöðull þeirrar forritunarvinnu og líkanagerðar sem hér birtist í skýrslunni". Krefjandi starf en ótrúlega, ótrúlega gefandi að fá að taka þátt í þessu. 
+[ ![Skjáskot af forsíðu skýrslunnar](/post/2019-12-31-samantekt-arsins-2019_files/skyrsla.PNG)](https://www.stjornarradid.is/lisalib/getfile.aspx?itemid=1e217960-3912-11e9-9432-005056bc530c)
+
+* **Ég hjólaði 1.287 km frá Danmörku til Frakklands með Team Rynkeby til stuðnings Styrktarfélagi Krabbameinssjúkra Barna (SKB).** 
+![Þrír meðlimir Team Rynkeby eftir að hafa hjólað 1.287 kílómetra á 8 dögum.](/post/2019-12-31-samantekt-arsins-2019_files/rynkeby_nota.jpg)
+Ef þú ert að lesa þetta þá vil ég svo mikið hvetja þig til að styrkja þetta mikilvæga verkefni. 100% af söfnunarféinu fer til SKB. Það er einfalt, þú getur til dæmis hringt í eftirfarandi númer. 
+  + 907-1601: 1.500 kr.
+  + 907-1602: 3.000 kr.
+  + 907-1603: 5.000 kr.<br><br>
+
+
+
+* **Ég gerði fullt af Shiny mælaborðum, stjórnborðum og reiknivélum.** Ein [reiknivélin](https://hlynur.shinyapps.io/tekjuskattskerfi/) varð ["viral"](https://www.visir.is/g/2019190919752) og ég gat ekki notað símann minn í tvo daga af því að fólk hafði svo margar spurningar um tekjuskattsbreytingarnar. 
+
+* **Hey, já. Svo gerði ég þessa heimasíðu sem þú ert að skoða.** Það var skemmtilegt. Hún er öll gerð í [blogdown](https://bookdown.org/yihui/blogdown/) pakkanum í R, þannig ég þurfti ekki einu sinni að fara út úr [RStudio](https://rstudio.com/) til að gera hana.
+
+* **Ég fór á vélnámsvinnustofu hjá Max Kuhn í London.** Það var svo fáránlega fræðandi og gefandi að það kemst engan veginn fyrir almennilega í þessum pósti. En í stuttu máli, það var gjörsamlega geggjað. Ég hef tekið fjöldan allan af kúrsum og vinnustofum í vélnámi, en þetta var **by far** langbesta kennsluupplifun sem ég hef átt innan þessa geira. 
+
+# R
+
+Hvaða pakkar stóðu upp úr?
+
+* **tidyverse**. Þetta kemur engum á óvart. *tidyverse* er undirstaðan í allri minni vinnu.
+* **parsnip** og öll **tidymodels** svítan af R pökkum. 
+* **rmarkdown**. Það er smá skrítið að segja það af því að það er svo mikið grundvallaratriði í verkflæðinu mínu í dag, en áramótaheitið mitt fyrir 2019 var að temja mér að nota alltaf *rmarkdown* þegar við átti. Þannig að þó mér finnist ég hafa verið í *rmarkdown* landi í langan tíma, þá er það strangt til tekið bara "nýtilkomið".  
+* **drake** pakkinn. Ég mun aldrei fara til baka. Þegar maður er byrjaður að halda utan um verkflæði verkefnanna sinna með þessum hætti, hugsar maður bara "Hvernig fúnkeraði ég í stórum verkefnum fyrir tíma *drake*?" 
+* **future** og **furrr**. Ég byrjaði að nota *furrr* (og þar með *future* bakendann) til að gera **purrr** aðgerðir að parallel útreikningum á mörgum kjörnum. Það er snilld upp á hve mikið ég nota *purrr*. Syntaxinn er sá sami, þannig að maður fær "ókeypis" parallel útreikninga með *furrr*. Plús að það passar mjög smurt inn í *drake* umhverfið. 
+
+#### Allt í allt, helvíti fínt ár. 
