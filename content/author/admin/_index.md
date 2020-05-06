@@ -9,14 +9,14 @@ authors = ["admin"]
 superuser = true
 
 # Role/position
-role = "Data Scientist"
+role = "Senior Data Scientist"
 
 # Organizations/Affiliations
 #   Separate multiple entries with a comma, using the form: `[ {name="Org1", url=""}, {name="Org2", url=""} ]`.
-organizations = [ { name = "Fjármála- og efnahagsráðuneytið", url = "https://fjr.is" } ]
+organizations = [ { name = "Gagnaþjónusta Reykjavíkur", url = "https://rvk.is" } ]
 
 # Short bio (displayed in user profile at end of posts)
-bio = "My research interests include the intersection of microsimulation and machine learning."
+bio = "My research interests include the intersection of machine learning and microsimulation."
 
 # Enter email to display Gravatar (if Gravatar enabled in Config)
 email = "hlynurh@gmail.com"
@@ -24,8 +24,8 @@ email = "hlynurh@gmail.com"
 # List (academic) interests or hobbies
 interests = [
   "R",
-  "Örhermilíkön",
   "Vélnám með viðgjafaraðferðum",
+  "Örhermilíkön",
   "SQL",
   "Myndræn framsetning gagna"
 ]
@@ -74,4 +74,4 @@ user_groups = ["Researchers", "Visitors"]
 
 +++
 
-Ég heiti Hlynur og er stjórnmálahagfræðingur að mennt. Ég starfa sem sérfræðingur í gagnagreiningu og spálíkanagerð hjá Fjármála- og efnahagsráðuneytinu.
+Ég heiti Hlynur og er stjórnmálahagfræðingur að mennt. Ég starfa sem sérfræðingur í gagnavísindum hjá Gagnaþjónustu Reykjavíkur.

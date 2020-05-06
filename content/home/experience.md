@@ -18,12 +18,27 @@ date_format = "Jan 2006"
 #   Leave `date_end` empty if it's your current employer.
 #   Begin/end multi-line descriptions with 3 quotes `"""`.
 [[experience]]
+  title = "Senior Data Scientist"
+  company = "City of Reykjavík"
+  company_url = "https://rvk.is"
+  location = "Reykjavík, Iceland"
+  date_start = "2020-03-01"
+  date_end = ""
+  description = """
+
+Developing analyses, data pipelines, dashboards, R packages and more within the Data Science team at The City of Reykjavík Data Services.
+
+
+  """
+
+
+[[experience]]
   title = "Data Scientist"
   company = "Ministry of Finance and Economic Affairs"
   company_url = "https://fjr.is"
   location = "Reykjavík, Iceland"
   date_start = "2016-11-01"
-  date_end = ""
+  date_end = "2020-02-29"
   description = """
 Data scientist, R-developer and economist working within the Department of Taxation. My work focuses on revenue forecasting via microsimulation and machine learning in R and SQL. 
 
